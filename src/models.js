@@ -1,13 +1,36 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes, DATE } = require("sequelize");
 const sequelize = require("./db-connection");
 
-const TokenModel = sequelize.define(
-  "tokens",
+const ClientsModel = sequelize.define(
+  "clients",
   {
-    token: {
+    cliendID: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      unique: true,
+      allowNull: false,
+      primaryKey: true,
+    },
+    clientName: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+    },
+  },
+  {
+    tableName: "clients",
+    timestamps: false,
+  }
+);
+
+const TokenModel = sequelize.define(
+  "token",
+  {
+    tokenValue: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      primaryKey: true,
     },
     validUntil: {
       type: DataTypes.DATE,
@@ -20,40 +43,44 @@ const TokenModel = sequelize.define(
     },
   },
   {
-    tableName: "tokens",
+    tableName: "token",
     timestamps: false,
   }
 );
 
-sequelize.drop();
-console.log("kascnkasjdn");
+ClientsModel.hasMany(TokenModel, {
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
 
-async function deleteAllTablesExecptDataTable() {
-  const [results] = await sequelize.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public' -- 'public' is the default schema in PostgreSQL, adjust if needed
-        AND table_type = 'BASE TABLE';
-    `);
-  let tableNames = results.map((result) => result.table_name);
+TokenModel.belongsTo(ClientsModel, {
+  foreignKey: {
+    allowNull: false,
+  },
+});
 
-  for (let tableName of tableNames) {
-    if (tableName !== "DataTable") {
-      await sequelize.query(`DROP TABLE IF EXISTS "${tableName}" CASCADE;`);
-    }
-  }
-}
+authenticateConnection()
+  .then(() => {
+    syncSequelize();
+  })
+  .catch((error) => {
+    console.log(`ERROR WHILE APPLYING DATA OPERATIONS: ${error}`);
+  });
 
-async function clearData() {
+async function authenticateConnection() {
   try {
-    await DataTable.destroy({
-      where: {}, // This empty object will match all records in the table
-      truncate: true, // Use `truncate` to remove all rows efficiently
-    });
-    console.log("DATA CLEARED SUCCESSFULLY", "\n");
-  } catch (err) {
-    console.error("ERROR CLEARING DATA: ", err);
+    await sequelize.authenticate();
+  } catch (error) {
+    console.error(`ERROR WHILE AUTHENTICATING DB CONNCETION: ${error}`);
   }
 }
 
-module.exports = TokenModel;
+async function syncSequelize() {
+  try {
+    await sequelize.sync({ force: true });
+  } catch (error) {
+    console.error(`ERROR WHILE SYNCING SEQUELIZE: ${error}`);
+  }
+}
+
+module.exports = { ClientsModel, TokenModel };

@@ -12,28 +12,4 @@ const sequelize = new Sequelize(
   }
 );
 
-authenticateConnection()
-  .then(() => {
-    syncSequelize();
-  })
-  .catch((error) => {
-    console.log(`ERROR WHILE APPLYING DATA OPERATIONS: ${error}`);
-  });
-
-async function authenticateConnection() {
-  try {
-    await sequelize.authenticate();
-  } catch (error) {
-    console.error(`ERROR WHILE AUTHENTICATING DB CONNCETION: ${error}`);
-  }
-}
-
-async function syncSequelize() {
-  try {
-    await sequelize.sync({ force: true });
-  } catch (error) {
-    console.error(`ERROR WHILE SYNCING SEQUELIZE: ${error}`);
-  }
-}
-
 module.exports = sequelize;
