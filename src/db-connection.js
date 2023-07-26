@@ -16,10 +16,11 @@ authenticateConnection()
   .then(() => {
     syncSequelize();
   })
+  .then(() => {
+    sequelize.drop();
+  })
   .catch((error) => {
-    {
-      console.log(`ERROR WHILE APPLYING DATA OPERATIONS: ${error}`);
-    }
+    console.log(`ERROR WHILE APPLYING DATA OPERATIONS: ${error}`);
   });
 
 async function authenticateConnection() {

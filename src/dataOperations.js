@@ -1,4 +1,4 @@
-// const TokenModel = require("./models");
+const TokenModel = require("./models");
 
 async function saveTokenIntoDB() {}
 function validateToken() {}
