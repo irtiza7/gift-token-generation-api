@@ -1,33 +1,23 @@
 const { nanoid } = require("nanoid");
 
-async function genTokensAccordingToDigits(numberOfTokens) {
-  const digitsInNumberOfTokens = getNumOfDigits(numberOfTokens);
+async function generateTokens(numberOfTokens, lengthOfTokens) {
+  if (numberOfTokens < 0 || lengthOfTokens < 0) {
+    throw new Error("Invalid Values for NumOfTokens or LengthOfTokens");
+  }
+
+  const possibleCombos = 64 ** lengthOfTokens; // 64 is the default number of alphabets used by nanoid()
+  lengthOfTokens = possibleCombos < numberOfTokens ? 6 : lengthOfTokens;
 
   const tokenSet = new Set();
   let duplications = 0;
 
-  for (let i = 0; i < numberOfTokens; i++) {
-    let token = nanoid(digitsInNumberOfTokens);
+  while (tokenSet.size < numberOfTokens) {
+    let token = nanoid(lengthOfTokens);
     !tokenSet.has(token) ? tokenSet.add(token) : duplications++;
   }
+
   console.log(`Duplications: ${duplications}`);
   return tokenSet;
 }
 
-function getNumOfDigits(number) {
-  /* 
-    Constraint: Bitwise is faster than lets say MATH.floor or MATH.trun
-    but can handle number upto  2^31 
-    */
-  if (number === 0) {
-    return 1;
-  }
-
-  let count = 0;
-  while (number > 0) {
-    number = ~~(number / 10);
-    count++;
-  }
-  return count;
-}
-module.exports = genTokensAccordingToDigits;
+module.exports = generateTokens;
