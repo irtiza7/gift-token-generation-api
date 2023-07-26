@@ -1,6 +1,6 @@
-const TokenModel = require("./models");
+// const TokenModel = require("./models");
 
 async function saveTokenIntoDB() {}
-function generateUniqueToken() {}
 function validateToken() {}
-async function sendResponse(req, res, resData, statusCode) {}
+
+module.exports = { saveTokenIntoDB };

@@ -9,6 +9,10 @@ const TokenModel = sequelize.define(
       allowNull: false,
       unique: true,
     },
+    clientName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     validUntil: {
       type: DataTypes.DATE,
       allowNull: null,

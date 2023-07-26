@@ -1,13 +1,20 @@
 const Express = require("express");
 const Morgan = require("morgan");
+const Timeout = require("connect-timeout");
 const Router = require("./routes");
+require("dotenv").config();
 
-const app = Express();
+const serverApp = Express();
 
-app.use(Morgan("combined"));
-app.use(Express.json());
+serverApp.use(Express.json());
+serverApp.use(Morgan("common"));
+serverApp.use(Timeout("10s"));
+serverApp.use("/", Router);
 
-app.listen(process.env.PORT, () => {
+serverApp.listen(process.env.SERVER_PORT, (error) => {
+  if (error) {
+    console.error(error);
+  }
   console.log(
     `Listening at http://${process.env.SERVER_HOST}:${process.env.SERVER_PORT}`
   );
