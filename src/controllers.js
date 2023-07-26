@@ -1,19 +1,20 @@
 const DataOperations = require("./dataOperations");
-const generateTokens = require("./generateTokenFunctions");
 
 async function handleGenerateTokenRequest(req, res) {
-  const numberOfTokens = req.body["numberOfTokensRequired"];
-  const lengthOfTokens = req.body.lengthOfTokens;
+  const numOfTokensToGen = req.body["numberOfTokensRequired"];
+  const lenOfTokensToUse = req.body.lengthOfTokens;
   const validTill = req.body["validTill"];
 
   let startingTimeInMS = Date.now();
-  const tokenSet = await generateTokens(numberOfTokens, lengthOfTokens);
+  const tokenSet = await DataOperations.generateTokens(
+    numOfTokensToGen,
+    lenOfTokensToUse
+  );
   console.log(
     `Time taken for ${numberOfTokens} Tokens: ${
       (Date.now() - startingTimeInMS) / 1000
     }`
   );
-
   const data = { tokens: Array.from(tokenSet) };
   sendResponse(req, res, 200, data);
 }
