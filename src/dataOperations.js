@@ -1,6 +1,6 @@
 const { nanoid } = require("nanoid");
 const TokenModel = require("./models");
-const { HostNotFoundError } = require("sequelize");
+require("dotenv").config();
 
 async function generateTokens(numOfTokens, lenOfTokens) {
   if (numOfTokens < 0 || lenOfTokens < 0) {
@@ -23,16 +23,16 @@ async function generateTokens(numOfTokens, lenOfTokens) {
 }
 
 async function saveTokenIntoDB(
-  clientNamee,
-  tokensArray,
-  validityDatee,
-  redeemedStatuss = false
+  clientNameParam,
+  tokensArrayParam,
+  validityDateParam,
+  redeemedStatusParam = false
 ) {
-  //   const entries = tokensArray.map((tokenValue) => ({
-  //     tokenValue,
-  //     clientName,
-  //     validityDate,
-  //     redeemedStatus,
+  //   const entries = tokensArrayParam.map((tokenValue) => ({
+  //     tokenValueParam,
+  //     clientNameParam,
+  //     validityDateParam,
+  //     redeemedStatusParam,
   //   }));
   /* model.bulkCreate(array of objects, options) */
   let created = 0;
@@ -40,13 +40,13 @@ async function saveTokenIntoDB(
     //   await TokenModel.bulkCreate(entries, {
     //     updateOnDuplicate: ["tokenValue"],
     //   });
-    for (let token of tokensArray) {
+    for (let token of tokensArrayParam) {
       const [record, isCreated] = await TokenModel.findOrCreate({
         where: {
           tokenValue: token,
-          clientName: clientNamee,
-          validityDate: validityDatee,
-          redeemedStatus: redeemedStatuss,
+          clientName: clientNameParam,
+          validityDate: validityDateParam,
+          redeemedStatus: redeemedStatusParam,
         },
       });
       if (isCreated) {
@@ -59,8 +59,25 @@ async function saveTokenIntoDB(
     console.log(`CREATED: ${created}`);
   }
 }
+async function redeemToken(tokenValueParam) {
+  try {
+    const dbResponse = await TokenModel.findByPk(tokenValueParam);
+    if (dbResponse === null) {
+      return process.env.TOKEN_DOES_NOT_EXIST;
+    }
 
-function validateToken() {}
+    return validateToken(dbResponse)
+      ? "Redeemed"
+      : "Token Expired or Already Redeemed";
+  } catch (error) {
+    console.error(`ERROR IN getTokenInfoFromDB: ${error}`);
+    throw new Error(`ERROR IN getTokenInfoFromDB: ${error}`);
+  }
+}
+
+function validateToken(tokenData) {
+  return !tokenData.redeemedStatus && new Date() <= tokenData.validityDate;
+}
 
 async function displayDataFromTokenModel() {
   try {
@@ -94,4 +111,5 @@ module.exports = {
   saveTokenIntoDB,
   displayDataFromTokenModel,
   emptyTokenModel,
+  redeemToken,
 };

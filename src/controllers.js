@@ -1,4 +1,5 @@
 const DataOperations = require("./dataOperations");
+require("dotenv").config();
 
 async function handleGenerateTokenRequest(req, res) {
   const clientName = req.body["clientName"];
@@ -32,12 +33,23 @@ async function handleGenerateTokenRequest(req, res) {
     } minutes`
   );
 
-  // await DataOperations.displayDataFromTokenModel();
-
+  await DataOperations.displayDataFromTokenModel();
   console.log("REQUEST HANDLED \n");
 }
 
-async function handleRedeemTokenRequest(req, res) {}
+async function handleRedeemTokenRequest(req, res) {
+  const tokenValue = req.body["tokenValue"];
+  let redeemedStatus;
+
+  try {
+    redeemedStatus = await DataOperations.redeemToken(tokenValue);
+  } catch (error) {
+    redeemedStatus = "Could't process request right now";
+  } finally {
+    sendResponse(req, res, 200, redeemedStatus);
+  }
+  console.log("REQUEST HANDLED \n");
+}
 
 async function sendResponse(
   req,
