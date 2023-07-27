@@ -48,6 +48,7 @@ async function authenticateConnection() {
     console.error(`ERROR WHILE AUTHENTICATING DB CONNCETION: ${error}`);
   }
 }
+
 async function syncSequelize() {
   try {
     await sequelize.sync({ force: true });

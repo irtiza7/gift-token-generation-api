@@ -1,5 +1,4 @@
 const DataOperations = require("./dataOperations");
-require("dotenv").config();
 
 async function handleGenerateTokenRequest(req, res) {
   const clientName = req.body["clientName"];
@@ -60,7 +59,7 @@ async function sendResponse(
   try {
     res.json(resData);
   } catch (error) {
-    console.error("ERROR INSIDE sendResponse: ", error);
+    console.error(`ERROR INSIDE sendResponse: ${error}`);
   }
 }
 

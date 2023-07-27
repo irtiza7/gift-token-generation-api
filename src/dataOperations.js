@@ -28,18 +28,8 @@ async function saveTokenIntoDB(
   validityDateParam,
   redeemedStatusParam = false
 ) {
-  //   const entries = tokensArrayParam.map((tokenValue) => ({
-  //     tokenValueParam,
-  //     clientNameParam,
-  //     validityDateParam,
-  //     redeemedStatusParam,
-  //   }));
-  /* model.bulkCreate(array of objects, options) */
   let created = 0;
   try {
-    //   await TokenModel.bulkCreate(entries, {
-    //     updateOnDuplicate: ["tokenValue"],
-    //   });
     for (let token of tokensArrayParam) {
       const [record, isCreated] = await TokenModel.findOrCreate({
         where: {
@@ -54,11 +44,34 @@ async function saveTokenIntoDB(
       }
     }
   } catch (error) {
-    console.error("ERROR IN saveTokenIntoDB: ", error);
+    console.error(`ERROR IN saveTokenIntoDB: ${error}`);
   } finally {
     console.log(`CREATED: ${created}`);
   }
 }
+
+async function saveTokenIntoDBInBulk(
+  clientNameParam,
+  tokensArrayParam,
+  validityDateParam,
+  redeemedStatusParam = false
+) {
+  const entries = tokensArrayParam.map((tokenValue) => ({
+    tokenValue,
+    clientNameParam,
+    validityDateParam,
+    redeemedStatusParam,
+  }));
+  /* model.bulkCreate(array of objects, options) */
+  try {
+    await TokenModel.bulkCreate(entries, {
+      updateOnDuplicate: ["tokenValue"],
+    });
+  } catch (error) {
+    console.error(`ERROR IN saveTokenIntoDBInBulk: ${error}`);
+  }
+}
+
 async function redeemToken(tokenValueParam) {
   try {
     const dbResponse = await TokenModel.findByPk(tokenValueParam);
@@ -94,7 +107,7 @@ async function displayDataFromTokenModel() {
       console.log(row.dataValues);
     });
   } catch (error) {
-    console.error("ERROR IN displayDataFromTokenModel: ", error);
+    console.error(`ERROR IN displayDataFromTokenModel: ${error}`);
   }
 }
 
@@ -102,7 +115,7 @@ async function emptyTokenModel() {
   try {
     await TokenModel.destroy({ where: {} });
   } catch (error) {
-    console.error("ERROR IN emptyTokenModel: ", error);
+    console.error(`ERROR IN emptyTokenModel: ${error}`);
   }
 }
 
