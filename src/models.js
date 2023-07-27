@@ -1,30 +1,10 @@
-const { DataTypes, DATE } = require("sequelize");
+const { DataTypes, Model } = require("sequelize");
 const sequelize = require("./db-connection");
 
-const ClientsModel = sequelize.define(
-  "clients",
-  {
-    cliendID: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      unique: true,
-      allowNull: false,
-      primaryKey: true,
-    },
-    clientName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-  },
-  {
-    tableName: "clients",
-    timestamps: false,
-  }
-);
+class TokenModel extends Model {}
 
-const TokenModel = sequelize.define(
-  "token",
+// Model.init(attributes object, options object)
+TokenModel.init(
   {
     tokenValue: {
       type: DataTypes.STRING,
@@ -32,32 +12,26 @@ const TokenModel = sequelize.define(
       unique: true,
       primaryKey: true,
     },
-    validUntil: {
-      type: DataTypes.DATE,
-      allowNull: null,
+    clientName: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    redeemed: {
+    validityDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    redeemedStatus: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
     },
   },
   {
+    sequelize,
     tableName: "token",
     timestamps: false,
   }
 );
-
-ClientsModel.hasMany(TokenModel, {
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
-});
-
-TokenModel.belongsTo(ClientsModel, {
-  foreignKey: {
-    allowNull: false,
-  },
-});
 
 authenticateConnection()
   .then(() => {
@@ -74,7 +48,6 @@ async function authenticateConnection() {
     console.error(`ERROR WHILE AUTHENTICATING DB CONNCETION: ${error}`);
   }
 }
-
 async function syncSequelize() {
   try {
     await sequelize.sync({ force: true });
@@ -83,4 +56,4 @@ async function syncSequelize() {
   }
 }
 
-module.exports = { ClientsModel, TokenModel };
+module.exports = TokenModel;
