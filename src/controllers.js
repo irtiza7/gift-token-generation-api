@@ -1,39 +1,26 @@
-const DataOperations = require("./dataOperations");
+const TokenOperations = require("./token-operations");
 
 async function handleGenerateTokenRequest(req, res) {
-  const clientName = req.body["clientName"];
-  const numOfTokensToGen = req.body["numberOfTokensRequired"];
-  const lenOfTokensToUse = req.body.lengthOfTokens;
-  const validityDate = new Date(req.body["validityDate"])
+  const { clientName, numberOfTokensRequired, lengthOfTokens } = req.body;
+  const validityDate = new Date(req.body.validityDate)
     .toISOString()
     .slice(0, 10);
 
-  let startTime = Date.now();
-  const tokenSet = await DataOperations.generateTokens(
-    numOfTokensToGen,
-    lenOfTokensToUse
-  );
-  console.log(
-    `Time Taken to Generate ${numOfTokensToGen} Tokens: ${
-      (Date.now() - startTime) / 1000
-    } seconds`
+  const tokens = await TokenOperations.generateTokens(
+    numberOfTokensRequired,
+    lengthOfTokens
   );
 
-  const tokenArray = Array.from(tokenSet);
-  sendResponse(req, res, 200, tokenArray);
+  sendResponse(req, res, 200, tokens); ///// HANDLE THE RESPONSE /////
 
-  // await DataOperations.emptyTokenModel();
-
-  startTime = Date.now();
-  await DataOperations.saveTokenIntoDB(clientName, tokenArray, validityDate);
+  const startTime = Date.now();
+  await TokenOperations.saveTokenIntoDBInBulk(clientName, tokens, validityDate);
   console.log(
-    `Time Taken to Store ${numOfTokensToGen} Tokens: ${
+    `Storing Time: ${numberOfTokensRequired} Tokens - ${
       (Date.now() - startTime) / 1000 / 60
     } minutes`
   );
-
-  await DataOperations.displayDataFromTokenModel();
-  console.log("REQUEST HANDLED \n");
+  console.log("REQUEST HANDLED \n \n \n");
 }
 
 async function handleRedeemTokenRequest(req, res) {
@@ -41,13 +28,26 @@ async function handleRedeemTokenRequest(req, res) {
   let redeemedStatus;
 
   try {
-    redeemedStatus = await DataOperations.redeemToken(tokenValue);
+    redeemedStatus = await TokenOperations.redeemToken(tokenValue);
   } catch (error) {
     redeemedStatus = "Could't process request right now";
   } finally {
     sendResponse(req, res, 200, redeemedStatus);
   }
+  console.log("REQUEST HANDLED \n \n \n");
+}
+
+async function handledDisplayDataRequest(req, res) {
+  const { displayNElements } = req.body;
+  await TokenOperations.displayDataFromTokenModel(displayNElements);
+  sendResponse(req, res, 200, "Data Displayed on Console");
   console.log("REQUEST HANDLED \n");
+}
+
+async function handleDeleteDataRequest(req, res) {
+  await TokenOperations.emptyTokenModel();
+  sendResponse(req, res, 200, "All Data Deleted From Database");
+  console.log("REQUEST HANDLED \n \n \n");
 }
 
 async function sendResponse(
@@ -63,4 +63,9 @@ async function sendResponse(
   }
 }
 
-module.exports = { handleGenerateTokenRequest, handleRedeemTokenRequest };
+module.exports = {
+  handleGenerateTokenRequest,
+  handleRedeemTokenRequest,
+  handledDisplayDataRequest,
+  handleDeleteDataRequest,
+};

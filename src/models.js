@@ -9,7 +9,7 @@ TokenModel.init(
     tokenValue: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      //unique: true,
       primaryKey: true,
     },
     clientName: {
@@ -51,7 +51,7 @@ async function authenticateConnection() {
 
 async function syncSequelize() {
   try {
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ alter: true, force: false });
   } catch (error) {
     console.error(`ERROR WHILE SYNCING SEQUELIZE: ${error}`);
   }

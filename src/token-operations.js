@@ -1,6 +1,31 @@
 const { nanoid } = require("nanoid");
 const TokenModel = require("./models");
+const CONSTANTS = require("./constants");
 require("dotenv").config();
+
+TokenModel.beforeBulkCreate(async (records, options) => {
+  try {
+    const duplicatedRecords = await TokenModel.findAll({
+      where: {
+        tokenValue: records.map((token) => token.tokenValue),
+      },
+    });
+    if (duplicatedRecords.length === 0) {
+      return;
+    }
+    console.error(
+      `TOKEN DUPLICATIONS IN DATABASE: ${duplicatedRecords.length}`
+    );
+    const tokensArray = await generateTokens(
+      duplicatedRecords.length,
+      duplicatedRecords[0].tokenValue.length
+    );
+    const { clientName, validityDate } = duplicatedRecords[0];
+    await saveTokenIntoDBInBulk(clientName, tokensArray, validityDate);
+  } catch (error) {
+    console.error(`ERROR IN beforeBulkCreate: ${error}`);
+  }
+});
 
 async function generateTokens(numOfTokens, lenOfTokens) {
   if (numOfTokens < 0 || lenOfTokens < 0) {
@@ -9,17 +34,23 @@ async function generateTokens(numOfTokens, lenOfTokens) {
   const possibleCombos =
     64 **
     lenOfTokens; /* 64 is the default number of alphabets used by nanoid() */
-  lenOfTokens = possibleCombos < numOfTokens ? 6 : lenOfTokens;
+  lenOfTokens =
+    possibleCombos < numOfTokens ? CONSTANTS.DEFAULT_TOKEN_LENGTH : lenOfTokens;
 
   const tokenSet = new Set();
   let duplications = 0;
 
+  let startTime = Date.now();
   while (tokenSet.size < numOfTokens) {
     let token = nanoid(lenOfTokens);
     !tokenSet.has(token) ? tokenSet.add(token) : duplications++;
   }
-  console.log(`Duplications: ${duplications}`);
-  return tokenSet;
+  console.log(
+    `Token Generation Info - Duplications: ${duplications}, Time Taken: ${
+      (Date.now() - startTime) / 1000
+    } seconds `
+  );
+  return Array.from(tokenSet);
 }
 
 async function saveTokenIntoDB(
@@ -51,22 +82,21 @@ async function saveTokenIntoDB(
 }
 
 async function saveTokenIntoDBInBulk(
-  clientNameParam,
+  clientName,
   tokensArrayParam,
-  validityDateParam,
-  redeemedStatusParam = false
+  validityDate,
+  redeemedStatus = false
 ) {
   const entries = tokensArrayParam.map((tokenValue) => ({
     tokenValue,
-    clientNameParam,
-    validityDateParam,
-    redeemedStatusParam,
+    clientName,
+    validityDate,
+    redeemedStatus,
   }));
+
   /* model.bulkCreate(array of objects, options) */
   try {
-    await TokenModel.bulkCreate(entries, {
-      updateOnDuplicate: ["tokenValue"],
-    });
+    await TokenModel.bulkCreate(entries, { ignoreDuplicates: true });
   } catch (error) {
     console.error(`ERROR IN saveTokenIntoDBInBulk: ${error}`);
   }
@@ -78,7 +108,7 @@ async function redeemToken(tokenValueParam) {
     if (dbResponse === null) {
       return process.env.TOKEN_DOES_NOT_EXIST;
     }
-
+    await dbResponse.update({ redeemedStatus: true });
     return validateToken(dbResponse)
       ? "Redeemed"
       : "Token Expired or Already Redeemed";
@@ -92,20 +122,16 @@ function validateToken(tokenData) {
   return !tokenData.redeemedStatus && new Date() <= tokenData.validityDate;
 }
 
-async function displayDataFromTokenModel() {
+async function displayDataFromTokenModel(displayNElements = 10_000_000) {
   try {
-    /* 
-      findAll returns an array of objects where the objects are individual rows 
-      along with some meta data  
-      */
-    const entries = await TokenModel.findAll();
-    if (entries.length === 0) {
-      console.log("NO DATA");
+    const entries = await TokenModel.findAll({ limit: displayNElements });
+    if (!entries) {
+      throw new Error("findAll METHOD RETURNED null");
     }
-
-    entries.forEach((row) => {
-      console.log(row.dataValues);
-    });
+    // entries.forEach((row) => {
+    //   console.log(row.dataValues);
+    // });
+    console.log(`${entries.length} Records Found`);
   } catch (error) {
     console.error(`ERROR IN displayDataFromTokenModel: ${error}`);
   }
@@ -122,6 +148,7 @@ async function emptyTokenModel() {
 module.exports = {
   generateTokens,
   saveTokenIntoDB,
+  saveTokenIntoDBInBulk,
   displayDataFromTokenModel,
   emptyTokenModel,
   redeemToken,
