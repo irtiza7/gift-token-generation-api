@@ -9,13 +9,18 @@ async function handleGenerateTokenRequest(req, res) {
     numberOfTokensRequired,
     lengthOfTokens
   );
-  sendResponse(req, res, 200, tokens); ///// HANDLE THE RESPONSE /////
   const startTime = Date.now();
   await TokenOperations.saveTokenIntoDBInBulk(clientName, tokens, validityDate);
   console.log(
     `Storing Time for ${numberOfTokensRequired} Tokens: ${
       (Date.now() - startTime) / 1000 / 60
     } minutes`
+  );
+  await sendResponse(
+    req,
+    res,
+    200,
+    "Tokens Have Been Generated and Stored In Database"
   );
   console.log("REQUEST HANDLED \n\n\n");
 }
@@ -28,21 +33,31 @@ async function handleRedeemTokenRequest(req, res) {
   } catch (error) {
     redeemedStatus = "Could't process request right now";
   } finally {
-    sendResponse(req, res, 200, redeemedStatus);
+    await sendResponse(req, res, 200, redeemedStatus);
   }
+  console.log("REQUEST HANDLED \n\n\n");
+}
+
+async function handleGetTokensRequest(req, res) {
+  const { clientName, numOfTokensRequired } = req.body;
+  const tokens = await TokenOperations.getTokensFromTokenModel(
+    clientName,
+    numOfTokensRequired
+  );
+  await sendResponse(req, res, 200, tokens);
   console.log("REQUEST HANDLED \n\n\n");
 }
 
 async function handledDisplayDataRequest(req, res) {
   const { displayNElements } = req.body;
   await TokenOperations.displayDataFromTokenModel(displayNElements);
-  sendResponse(req, res, 200, "Data Displayed on Console");
+  await sendResponse(req, res, 200, "Data Displayed on Console");
   console.log("REQUEST HANDLED \n\n\n");
 }
 
 async function handleDeleteDataRequest(req, res) {
   await TokenOperations.emptyTokenModel();
-  sendResponse(req, res, 200, "All Data Deleted From Database");
+  await sendResponse(req, res, 200, "All Data Deleted From Database");
   console.log("REQUEST HANDLED \n\n\n");
 }
 
@@ -62,6 +77,7 @@ async function sendResponse(
 module.exports = {
   handleGenerateTokenRequest,
   handleRedeemTokenRequest,
+  handleGetTokensRequest,
   handledDisplayDataRequest,
   handleDeleteDataRequest,
 };

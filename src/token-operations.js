@@ -1,6 +1,7 @@
 const { nanoid } = require("nanoid");
 const TokenModel = require("./models");
 const CONSTANTS = require("./constants");
+const { token } = require("morgan");
 require("dotenv").config();
 
 TokenModel.beforeBulkCreate(async (records, options) => {
@@ -144,6 +145,32 @@ async function displayDataFromTokenModel(displayNElements = 10_000_000) {
   }
 }
 
+async function getTokensFromTokenModel(
+  clientName,
+  numOfTokensToReturn = CONSTANTS.DEFAULT_NUMBER_OF_TOKENS_TO_RETURN_TO_CLIENT
+) {
+  try {
+    const records = await TokenModel.findAll({
+      where: {
+        clientName: clientName,
+        redeemedStatus: false,
+      },
+      limit: numOfTokensToReturn,
+    });
+    if (!records) {
+      throw new Error("findAll METHOD RETURNED null");
+    }
+    console.log(`${records.length} Records Found`);
+    let tokensArray = [];
+    records.forEach((record) => {
+      tokensArray.push(record.tokenValue);
+    });
+    return tokensArray;
+  } catch (error) {
+    console.error(`ERROR IN displayDataFromTokenModel: ${error}`);
+  }
+}
+
 async function emptyTokenModel() {
   try {
     await TokenModel.destroy({ where: {} });
@@ -157,6 +184,7 @@ module.exports = {
   saveTokenIntoDB,
   saveTokenIntoDBInBulk,
   displayDataFromTokenModel,
+  getTokensFromTokenModel,
   emptyTokenModel,
   redeemToken,
 };
