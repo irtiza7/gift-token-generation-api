@@ -7,15 +7,13 @@ TokenModel.beforeBulkCreate(async (records, options) => {
   try {
     const duplicatedRecords = await TokenModel.findAll({
       where: {
-        tokenValue: records.map((token) => token.tokenValue),
+        tokenValue: records.map((record) => record.tokenValue),
       },
     });
     if (duplicatedRecords.length === 0) {
       return;
     }
-    console.error(
-      `TOKEN DUPLICATIONS IN DATABASE: ${duplicatedRecords.length}`
-    );
+    console.error(`DB DUPLICATIONS: ${duplicatedRecords.length}`);
     const tokensArray = await generateTokens(
       duplicatedRecords.length,
       duplicatedRecords[0].tokenValue.length
@@ -31,19 +29,13 @@ async function generateTokens(numOfTokens, lenOfTokens) {
   if (numOfTokens < 0 || lenOfTokens < 0) {
     throw new Error("Invalid Values for NumOfTokens or LengthOfTokens");
   }
-  const possibleCombos =
-    64 **
-    lenOfTokens; /* 64 is the default number of alphabets used by nanoid() */
-  lenOfTokens =
-    possibleCombos < numOfTokens ? CONSTANTS.DEFAULT_TOKEN_LENGTH : lenOfTokens;
-
+  lenOfTokens = handleTokenLengthConstraints(numOfTokens, lenOfTokens);
   const tokenSet = new Set();
   let duplications = 0;
-
   let startTime = Date.now();
   while (tokenSet.size < numOfTokens) {
     let token = nanoid(lenOfTokens);
-    !tokenSet.has(token) ? tokenSet.add(token) : duplications++;
+    tokenSet.has(token) ? duplications++ : tokenSet.add(token);
   }
   console.log(
     `Token Generation Info - Duplications: ${duplications}, Time Taken: ${
@@ -51,6 +43,19 @@ async function generateTokens(numOfTokens, lenOfTokens) {
     } seconds `
   );
   return Array.from(tokenSet);
+}
+
+function handleTokenLengthConstraints(numOfTokens, lenOfTokens) {
+  const possibleCombos =
+    64 **
+    lenOfTokens; /* 64 is the default number of alphabets used by nanoid() */
+  if (
+    possibleCombos < numOfTokens ||
+    lenOfTokens < CONSTANTS.DEFAULT_TOKEN_LENGTH
+  ) {
+    return CONSTANTS.DEFAULT_TOKEN_LENGTH;
+  }
+  return lenOfTokens;
 }
 
 async function saveTokenIntoDB(
@@ -106,12 +111,14 @@ async function redeemToken(tokenValueParam) {
   try {
     const dbResponse = await TokenModel.findByPk(tokenValueParam);
     if (dbResponse === null) {
-      return process.env.TOKEN_DOES_NOT_EXIST;
+      return CONSTANTS.TOKEN_DOES_NOT_EXIST;
+    }
+    let redeemStatus = "Token Expired or Already Redeemed";
+    if (validateToken(dbResponse)) {
+      redeemStatus = "Redeemed";
     }
     await dbResponse.update({ redeemedStatus: true });
-    return validateToken(dbResponse)
-      ? "Redeemed"
-      : "Token Expired or Already Redeemed";
+    return redeemStatus;
   } catch (error) {
     console.error(`ERROR IN getTokenInfoFromDB: ${error}`);
     throw new Error(`ERROR IN getTokenInfoFromDB: ${error}`);
@@ -128,9 +135,9 @@ async function displayDataFromTokenModel(displayNElements = 10_000_000) {
     if (!entries) {
       throw new Error("findAll METHOD RETURNED null");
     }
-    // entries.forEach((row) => {
-    //   console.log(row.dataValues);
-    // });
+    entries.forEach((row) => {
+      console.log(row.dataValues);
+    });
     console.log(`${entries.length} Records Found`);
   } catch (error) {
     console.error(`ERROR IN displayDataFromTokenModel: ${error}`);

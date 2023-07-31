@@ -9,7 +9,6 @@ TokenModel.init(
     tokenValue: {
       type: DataTypes.STRING,
       allowNull: false,
-      //unique: true,
       primaryKey: true,
     },
     clientName: {
