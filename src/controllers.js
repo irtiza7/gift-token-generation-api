@@ -13,8 +13,8 @@ async function handleGenerateTokenRequest(req, res) {
   await TokenOperations.saveTokenIntoDBInBulk(clientName, tokens, validityDate);
   console.log(
     `Storing Time for ${numberOfTokensRequired} Tokens: ${
-      (Date.now() - startTime) / 1000 / 60
-    } minutes`
+      (Date.now() - startTime) / 1000
+    } seconds`
   );
   await sendResponse(
     req,
@@ -51,8 +51,11 @@ async function handleGetTokensRequest(req, res) {
 
 async function handledDisplayDataRequest(req, res) {
   const { displayNElements } = req.body;
-  await TokenOperations.displayDataFromTokenModel(displayNElements);
-  await sendResponse(req, res, 200, "Data Displayed on Console");
+  const numOfRecordsFound = await TokenOperations.displayDataFromTokenModel(
+    displayNElements
+  );
+  const response = { "Number of Records Found": numOfRecordsFound };
+  await sendResponse(req, res, 200, response);
   console.log("REQUEST HANDLED \n\n\n");
 }
 

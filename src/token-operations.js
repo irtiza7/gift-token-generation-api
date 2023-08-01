@@ -127,10 +127,11 @@ async function displayDataFromTokenModel(displayNElements = 10_000) {
     if (!entries) {
       throw new Error("findAll METHOD RETURNED null");
     }
-    // entries.forEach((row) => {
-    //   console.log(row.dataValues);
-    // });
+    entries.forEach((row) => {
+      console.log(row.dataValues);
+    });
     console.log(`${entries.length} Records Found`);
+    return entries.length;
   } catch (error) {
     console.error(`ERROR IN displayDataFromTokenModel: ${error}`);
   }
