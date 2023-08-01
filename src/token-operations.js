@@ -2,29 +2,8 @@ const { nanoid } = require("nanoid");
 const TokenModel = require("./models");
 const CONSTANTS = require("./constants");
 const { token } = require("morgan");
+const sequelize = require("./db-connection");
 require("dotenv").config();
-
-TokenModel.beforeBulkCreate(async (records, options) => {
-  try {
-    const duplicatedRecords = await TokenModel.findAll({
-      where: {
-        tokenValue: records.map((record) => record.tokenValue),
-      },
-    });
-    if (duplicatedRecords.length === 0) {
-      return;
-    }
-    console.error(`DB DUPLICATIONS: ${duplicatedRecords.length}`);
-    const tokensArray = await generateTokens(
-      duplicatedRecords.length,
-      duplicatedRecords[0].tokenValue.length
-    );
-    const { clientName, validityDate } = duplicatedRecords[0];
-    await saveTokenIntoDBInBulk(clientName, tokensArray, validityDate);
-  } catch (error) {
-    console.error(`ERROR IN beforeBulkCreate: ${error}`);
-  }
-});
 
 async function generateTokens(numOfTokens, lenOfTokens) {
   if (numOfTokens < 0 || lenOfTokens < 0) {
@@ -59,34 +38,6 @@ function handleTokenLengthConstraints(numOfTokens, lenOfTokens) {
   return lenOfTokens;
 }
 
-async function saveTokenIntoDB(
-  clientNameParam,
-  tokensArrayParam,
-  validityDateParam,
-  redeemedStatusParam = false
-) {
-  let created = 0;
-  try {
-    for (let token of tokensArrayParam) {
-      const [record, isCreated] = await TokenModel.findOrCreate({
-        where: {
-          tokenValue: token,
-          clientName: clientNameParam,
-          validityDate: validityDateParam,
-          redeemedStatus: redeemedStatusParam,
-        },
-      });
-      if (isCreated) {
-        created++;
-      }
-    }
-  } catch (error) {
-    console.error(`ERROR IN saveTokenIntoDB: ${error}`);
-  } finally {
-    console.log(`CREATED: ${created}`);
-  }
-}
-
 async function saveTokenIntoDBInBulk(
   clientName,
   tokensArrayParam,
@@ -99,14 +50,46 @@ async function saveTokenIntoDBInBulk(
     validityDate,
     redeemedStatus,
   }));
-
-  /* model.bulkCreate(array of objects, options) */
   try {
     await TokenModel.bulkCreate(entries, { ignoreDuplicates: true });
   } catch (error) {
     console.error(`ERROR IN saveTokenIntoDBInBulk: ${error}`);
   }
 }
+
+let numberOfDuplicatedTokensInDB = 0;
+
+TokenModel.beforeBulkCreate(async (records, options) => {
+  try {
+    numberOfDuplicatedTokensInDB = await TokenModel.count({
+      where: {
+        tokenValue: records.map((record) => record.tokenValue),
+      },
+    });
+  } catch (error) {
+    console.error(`ERROR IN beforeBulkCreate: ${error}`);
+  }
+});
+
+TokenModel.afterBulkCreate(async (records, options) => {
+  try {
+    console.log(
+      `[afterBulkCreation] - Tokens Duplications: ${numberOfDuplicatedTokensInDB}`
+    );
+    if (numberOfDuplicatedTokensInDB === 0) {
+      return;
+    }
+    let lengthOfDuplicatedTokensInDB = records[0].tokenValue.length;
+    const tokensArray = await generateTokens(
+      numberOfDuplicatedTokensInDB,
+      lengthOfDuplicatedTokensInDB
+    );
+    const { clientName, validityDate } = records[0];
+    await saveTokenIntoDBInBulk(clientName, tokensArray, validityDate);
+  } catch (error) {
+    console.error(`ERROR IN afterBulkCreate: ${error}`);
+  }
+});
 
 async function redeemToken(tokenValueParam) {
   try {
@@ -136,9 +119,9 @@ async function displayDataFromTokenModel(displayNElements = 10_000_000) {
     if (!entries) {
       throw new Error("findAll METHOD RETURNED null");
     }
-    entries.forEach((row) => {
-      console.log(row.dataValues);
-    });
+    // entries.forEach((row) => {
+    //   console.log(row.dataValues);
+    // });
     console.log(`${entries.length} Records Found`);
   } catch (error) {
     console.error(`ERROR IN displayDataFromTokenModel: ${error}`);
@@ -181,7 +164,6 @@ async function emptyTokenModel() {
 
 module.exports = {
   generateTokens,
-  saveTokenIntoDB,
   saveTokenIntoDBInBulk,
   displayDataFromTokenModel,
   getTokensFromTokenModel,

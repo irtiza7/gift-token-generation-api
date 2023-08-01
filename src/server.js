@@ -8,7 +8,7 @@ const serverApp = Express();
 
 serverApp.use(Express.json());
 serverApp.use(Morgan("common"));
-serverApp.use(Timeout("15s"));
+serverApp.use(Timeout("20s"));
 serverApp.use("/", Router);
 
 serverApp.listen(process.env.SERVER_PORT, (error) => {
