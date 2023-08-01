@@ -1,8 +1,6 @@
 const { nanoid } = require("nanoid");
-const TokenModel = require("./models");
+const { TokenModel, sequelize } = require("./models");
 const CONSTANTS = require("./constants");
-const { token } = require("morgan");
-const sequelize = require("./db-connection");
 require("dotenv").config();
 
 async function generateTokens(numOfTokens, lenOfTokens) {
@@ -93,19 +91,23 @@ TokenModel.afterBulkCreate(async (records, options) => {
 
 async function redeemToken(tokenValueParam) {
   try {
-    const dbResponse = await TokenModel.findByPk(tokenValueParam);
-    if (dbResponse === null) {
-      return CONSTANTS.TOKEN_DOES_NOT_EXIST;
-    }
-    let redeemStatus = "Token Expired or Already Redeemed";
-    if (validateToken(dbResponse)) {
-      redeemStatus = "Redeemed";
-    }
-    await dbResponse.update({ redeemedStatus: true });
-    return redeemStatus;
+    return await sequelize.transaction(async (transaction) => {
+      const dbResponse = await TokenModel.findByPk(tokenValueParam, {
+        transaction,
+      });
+      if (dbResponse === null) {
+        return CONSTANTS.TOKEN_DOES_NOT_EXIST;
+      }
+      let redeemStatus = "Token Expired or Already Redeemed";
+      if (validateToken(dbResponse)) {
+        redeemStatus = "Redeemed";
+      }
+      await dbResponse.update({ redeemedStatus: true }, { transaction });
+      return redeemStatus;
+    });
   } catch (error) {
-    console.error(`ERROR IN getTokenInfoFromDB: ${error}`);
-    throw new Error(`ERROR IN getTokenInfoFromDB: ${error}`);
+    console.error(`ERROR INSIDE redeemToken: ${error}`);
+    throw new Error(`ERROR INSIDE redeemToken: ${error}`);
   }
 }
 

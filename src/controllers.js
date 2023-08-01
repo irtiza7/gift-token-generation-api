@@ -33,6 +33,7 @@ async function handleRedeemTokenRequest(req, res) {
   } catch (error) {
     redeemedStatus = "Could't process request right now";
   } finally {
+    console.log(`REDEEMED STATUS: ${redeemedStatus}`);
     await sendResponse(req, res, 200, redeemedStatus);
   }
   console.log("REQUEST HANDLED \n\n\n");

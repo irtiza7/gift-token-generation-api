@@ -56,4 +56,4 @@ async function syncSequelize() {
   }
 }
 
-module.exports = TokenModel;
+module.exports = { TokenModel, sequelize };
