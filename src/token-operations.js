@@ -49,7 +49,13 @@ async function saveTokenIntoDBInBulk(
     redeemedStatus,
   }));
   try {
-    await TokenModel.bulkCreate(entries, { ignoreDuplicates: true });
+    await sequelize.transaction(async (transaction) => {
+      await TokenModel.bulkCreate(
+        entries,
+        { ignoreDuplicates: true },
+        { transaction }
+      );
+    });
   } catch (error) {
     console.error(`ERROR IN saveTokenIntoDBInBulk: ${error}`);
   }
@@ -115,7 +121,7 @@ function validateToken(tokenData) {
   return !tokenData.redeemedStatus && new Date() <= tokenData.validityDate;
 }
 
-async function displayDataFromTokenModel(displayNElements = 10_000_000) {
+async function displayDataFromTokenModel(displayNElements = 10_000) {
   try {
     const entries = await TokenModel.findAll({ limit: displayNElements });
     if (!entries) {
