@@ -1,5 +1,5 @@
 # Gift-Token-Generator-And-Redeemer
-You can use this API to generate required number of unique tokens for the clients and also redeem them. 
+You can use this API to generate required number of unique tokens for the clients and also redeem them. The API used NanoID as tokens, which takes less space in the storage as compared to UUID. 
 ___
 * ## Requirements
 * #### [Node v14.20.0](https://www.stewright.me/2021/03/install-nodejs-14-on-ubuntu-20-04/)
@@ -63,3 +63,6 @@ _or_
   "REDEEMED STATUS": "Token Expired or Already Redeemed"
 }
 ```
+___
+### TODO
+* Add client authentication functionality.
