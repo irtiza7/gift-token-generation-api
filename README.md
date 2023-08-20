@@ -1,7 +1,21 @@
 # Gift-Token-Generator-And-Redeemer
+You can use this API to generate required number of unique tokens and also redeem them. The API has 3 endpoints for the client:
+  - [POST] /api/generate_tokens
+  - [POST] /api/redeem_token
+  - [GET] /api/get_tokens
+There are another 2 endpoints for the developer:
+  - [GET] /api/dev/display_data
+  - [DELETE] /api/dev/delete_all_data
 
+To generate tokens, first hit the "generate_tokens" endpoint. The request's body should contain a JSON object with "clientName", "numberOfTokensRequired" and "lengthOfTokens" as keys and your requirements as the values.
+Example: 
+{
+  "clientName": "Google", 
+  "numberOfTokensRequired" : 10000, 
+  "lengthOfTokens": 12
+}
 
-
+Once the reques is sent, the server generates the required number of tokens and stores them in the database. 
 ## Getting started
 
 To make it easy for you to get started with GitLab, here's a list of recommended next steps.
