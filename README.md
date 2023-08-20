@@ -11,15 +11,28 @@ _Optional: If you are testing/exploring the API then you can use Postman to hit 
 * #### [Postman](https://www.postman.com/downloads/)
 ___
 ## Working
-The API has 3 endpoints for the client:
-  - [POST] /api/generate_tokens
-  - [POST] /api/redeem_token
-  - [GET] /api/get_tokens
-There are another 2 endpoints for the developer:
-  - [GET] /api/dev/display_data
-  - [DELETE] /api/dev/delete_all_data
+_Firstly, update the .env file to set the host, port, etc. for the server as well as the database. Also make sure you have created a databse in your database server i.e. PostgreSQL_
 
-* ### Generate Tokens
+### Create Database
+Follow the step 4 and 5 of: 
+[Create DB](https://cloudinfrastructureservices.co.uk/how-to-install-postgresql-on-ubuntu-22-04-server/)
+
+### Start Serve
+In the root directory of the app, run:
+```console
+$ node server.js
+```
+
+The API has 3 endpoints for the client:
+  * [POST] /api/generate_tokens
+  * [POST] /api/redeem_token
+  * [GET] /api/get_tokens
+
+There are another 2 endpoints for the developer:
+  * [GET] /api/dev/display_data
+  * [DELETE] /api/dev/delete_all_data
+
+1. ### Generate Tokens
 To generate tokens, first hit the "generate_tokens" endpoint. The request's body should contain a JSON object with "clientName", "numberOfTokensRequired", "lengthOfTokens" and "validityDate" as keys and your requirements as the values. <br>
 Example: <br>
 ```json
@@ -32,7 +45,7 @@ Example: <br>
 ```
 As a result of this request, the server generates the required number of tokens and stores them in the database. The client receives a JSON object containing the status of request.
 
-* ### Get Tokens
+2. ### Get Tokens
 To get the tokens from the server, hit the "get_tokens" endpoint. The request's body should contain a JSON object with "clientName" and "numOfTokensRequired" as keys and your requirements as the values. <br>
 Example: <br>
 ```json
@@ -43,7 +56,7 @@ Example: <br>
 ```
 As a result of this request, the server returns a JSON object containing the required number of tokens.
 
-* ### Redeem Tokens
+3. ### Redeem Tokens
 To redeem a token, hit the "redeem_token" endpoint. The request's body should contain a JSON object with "tokenValue" as key and the token as the value. <br>
 Example: <br>
 ```json
